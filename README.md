@@ -1,33 +1,11 @@
 # cg-2026-solar
-* 내가 만들고 싶은 항성계 한문장 소개 - "언젠가 인류가 탐사할만한 상상속 외계 항성계"
-* 실행방법 - `index.html` 파일을 웹 브라우저에서 연다.
-* 사용한 프롬프트
+#조사한 실제 수치 (실제크기(km) / 지구 중심으로부터 거리(km) )
+   - 지구 : 6371 / 0
+   - 달 : 1737 / 384400
+   - 인공위성(ISS) : 0.054 / 6771
+// 출처
+1. NASA Goddard Space Flight Center, "Earth Fact Sheet", https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
+2. NASA Goddard Space Flight Center, "Moon Fact Sheet", https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
+3. NASA, "International Space Station Overview", https://www.nasa.gov/international-space-station/
 
-## 배경색 추천 요청
-
-과제가 우주 항성계를 만드는 과정인데, WebGL의 `gl.clearColor`에 사용할 RGBA 비율을 추천해 줘.
-
-## 배경색 수정 요청
-
-추천해 준 값이 너무 검정색처럼 보이는데, 조금 더 보라빛이 나도록 변경하는 것이 나중에 더 좋을까?
-
-## 코드 수정 요청
-
-추천한 보라빛 우주 배경색 값으로 해당 코드를 변경해 줘.
-
-## 최종 적용 결과
-
-```js
-gl.clearColor(0.025, 0.01, 0.07, 1.0);
-```
-* 검증
-1. - (예측) 노란색 
-   - (결과) 주황색 
-   - (왜) R 비율이 G비율보다 2배 많기 때문에 노란색보다 R이 더 쎈 주황색이 나옴
-2. - (예측) 이미지 크기가 고정됨
-   - (결과) 브라우저 크기를 조절 할 때 배경이 사이즈를 따라오지 못함
-   - (왜) resize 함수가 매 프레임 캔버스 크기를 감지하고 다시 설정하는 함수이기 때문
-
-3. - (예측) 모르겠음
-   - (결과) 별다른점 없음
-   - (왜) 아직은 작업이 webgl1도 가능한 작업만 하고있음
+#Task1
