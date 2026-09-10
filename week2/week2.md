@@ -15,6 +15,7 @@ ISS
 ### 조사한 값
 
 | 항목 | 실제 크기(km) | 지구중심으로부터의 거리(km) | 출처 |
+| --- | --- | --- | --- |
 | 지구 | 6371 | 0 | NASA Goddard Space Flight Center, "Earth Fact Sheet", https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html |
 | 달 | 1737 | 384400 | NASA Goddard Space Flight Center, "Moon Fact Sheet", https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html |
 | ISS | 0.054 | 6771 | NASA, "International Space Station Overview", https://www.nasa.gov/international-space-station/ |
