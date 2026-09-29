@@ -1,4 +1,4 @@
-# 2주차 보고서
+# 3주차 보고서
 
 - 이름 : 김태민
 - 저장소 : https://github.com/kimposong/cg-2026-solar/
