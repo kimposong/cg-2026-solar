@@ -29,9 +29,20 @@
     return tex;
   }
   const signs=model.signs.map(p=>({...p,matrix:matrix(p.position,[...p.size,1],p.yaw),texture:texture(p)}));
+  const buildingFrames=[
+    {position:[0,4.61,0],size:[12.5,9.7,8.9],color:[.02,.78,.92]},
+    {position:[11,1.65,0],size:[5.5,3.7,5.5],color:[.96,.28,.02]},
+  ];
   const view=M.create(),projection=M.create(),vp=M.create();
   const hidden=new Set();
+  let showBuildingOutlines=false;
   function drawMesh(mesh,m,color,text=false){gl.uniformMatrix4fv(U.uModel,false,m);gl.uniformMatrix3fv(U.uNormal,false,M.normalFrom(m));gl.uniform3fv(U.uColor,color);gl.uniform1i(U.uText,text?1:0);gl.bindVertexArray(mesh.vao);gl.drawElements(gl.TRIANGLES,mesh.count,gl.UNSIGNED_SHORT,0);}
+  function drawOutline(frame){
+    const [x,y,z]=frame.position,[sx,sy,sz]=frame.size,thickness=.075;
+    for(const yy of [-1,1])for(const zz of [-1,1])drawMesh(cube,matrix([x,y+yy*sy/2,z+zz*sz/2],[sx+thickness,thickness,thickness]),frame.color);
+    for(const xx of [-1,1])for(const zz of [-1,1])drawMesh(cube,matrix([x+xx*sx/2,y,z+zz*sz/2],[thickness,sy+thickness,thickness]),frame.color);
+    for(const xx of [-1,1])for(const yy of [-1,1])drawMesh(cube,matrix([x+xx*sx/2,y+yy*sy/2,z],[thickness,thickness,sz+thickness]),frame.color);
+  }
   // viewport: 그리기 버퍼의 픽셀 좌표 [x,y,width,height]. 원점은 왼쪽 아래입니다.
   function drawView(camera,viewport=[0,0,canvas.width,canvas.height]){
     const [x,y,w,h]=viewport;if(w<=0||h<=0)return;
@@ -46,18 +57,55 @@
     for(const s of signs)if(!hidden.has(s.id)&&!hidden.has(s.group)){
       drawMesh(plane,s.matrix,[.25,.28,.32]);gl.enable(gl.CULL_FACE);gl.depthFunc(gl.LEQUAL);gl.bindTexture(gl.TEXTURE_2D,s.texture);drawMesh(plane,s.matrix,[1,1,1],true);gl.depthFunc(gl.LESS);gl.disable(gl.CULL_FACE);
     }
+    if(showBuildingOutlines){gl.disable(gl.DEPTH_TEST);for(const frame of buildingFrames)drawOutline(frame);gl.enable(gl.DEPTH_TEST);}
   }
   gl.enable(gl.DEPTH_TEST);
   let started=null,last='';
   const api={canvas,gl,model,controls,hidden,drawView,render:null};window.InspectionViewer=api;
   document.querySelector('#home').addEventListener('click',()=>{controls.home();controls.state.actions++;});
   document.querySelector('#measure').addEventListener('click',()=>{started=performance.now();controls.state.actions=0;});
-  for(const p of model.tasks){const li=document.createElement('li');const title=document.createElement('strong');title.textContent=p.id+' '+p.name;li.append(title,document.createElement('br'),document.createTextNode(p.task));document.querySelector('#tasks').appendChild(li);}
+  function focusQ2Buildings(){
+    const aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);
+    controls.focus([3.7,4.6,0],[1,0,0],30,{orthographic:true,halfHeight:Math.max(5.15,4.9/aspect)});
+  }
+  for(const p of model.tasks){
+    const li=document.createElement('li'),title=document.createElement('strong'),actions=document.createElement('div'),button=document.createElement('button');
+    let outlineButton=null;
+    const isComparison=!!p.viewDirection,label=p.id==='O1'?'Q1':p.id==='O2'?'Q2':p.id;
+    title.textContent=label+' '+p.name;
+    actions.className='task-actions';
+    button.type='button';button.className='btn task-view';button.textContent='목표 시점 보기';button.setAttribute('aria-label',label+' '+p.name+' 목표 시점 보기');
+    actions.appendChild(button);
+    button.addEventListener('click',()=>{
+      if(isComparison){
+        if(p.id==='O2')focusQ2Buildings();else controls.focus(p.position,p.viewDirection.map(value=>-value),30,{orthographic:true,halfHeight:2.6});
+      }
+      else{
+        const sign=model.poi.find(item=>item.id===p.id),distance={P1:3.8,P2:3,P3:2.5,P4:1.8,P5:3,P6:3.2}[sign.id];
+        controls.focus(sign.position,[Math.sin(sign.yaw),0,Math.cos(sign.yaw)],distance);
+      }
+      if(window.matchMedia('(max-width: 900px)').matches)window.scrollTo({top:0,behavior:'smooth'});
+    });
+    if(p.id==='O2'){
+      outlineButton=document.createElement('button');
+      outlineButton.type='button';outlineButton.className='btn outline-toggle';outlineButton.textContent='건물 외곽선 보기';outlineButton.setAttribute('aria-pressed','false');
+      outlineButton.addEventListener('click',()=>{
+        showBuildingOutlines=!showBuildingOutlines;
+        outlineButton.textContent=showBuildingOutlines?'외곽선 숨기기':'건물 외곽선 보기';
+        outlineButton.setAttribute('aria-pressed',String(showBuildingOutlines));
+        controls.state.actions++;
+        if(window.matchMedia('(max-width: 900px)').matches)window.scrollTo({top:0,behavior:'smooth'});
+      });
+      actions.appendChild(outlineButton);
+      li.append(title,document.createElement('br'),document.createTextNode(p.task),document.createElement('br'),actions);
+    }else li.append(title,document.createElement('br'),document.createTextNode(p.task),document.createElement('br'),actions);
+    document.querySelector('#tasks').appendChild(li);
+  }
   D.loop(()=>{
     const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
     if(api.render)api.render(api);else drawView(controls.camera());
-    const s=controls.state,value=`기본 트랙볼 · 거리 ${s.distance.toFixed(2)}m · FOV ${s.fov}°\n회전 중심 (${s.target.map(v=>v.toFixed(2)).join(', ')})\n측정 ${started===null?'시작 전':((performance.now()-started)/1000).toFixed(0)+'초'} · 기본 조작 ${s.actions}회`;
+    const s=controls.state,viewInfo=s.orthographic?`직교 높이 ${s.halfHeight.toFixed(2)}m`:`거리 ${s.distance.toFixed(2)}m · FOV ${s.fov}°`,value=`기본 트랙볼 · ${viewInfo}\n회전 중심 (${s.target.map(v=>v.toFixed(2)).join(', ')})\n측정 ${started===null?'시작 전':((performance.now()-started)/1000).toFixed(0)+'초'} · 기본 조작 ${s.actions}회`;
     if(value!==last){read.textContent=value;last=value;}
   });
 })();
